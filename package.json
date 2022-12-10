@@ -28,6 +28,6 @@
     "dependencies": {
         "path": "^0.12.7",
         "three": "^0.147.0",
-        "three.js": "^0.77.0"
+        "three.js": "^0.77.1"
     }
 }
