@@ -1,0 +1,33 @@
+{
+    "name": "electron-quick-start",
+    "version": "1.0.0",
+    "description": "A minimal Electron application",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron ."
+    },
+    "webPreferences": {
+        "nodeIntegration": true,
+        "contextIsolation": false,
+        "enableRemoteModule": true
+    },
+    "repository": "https://github.com/Rus1130/js-game.git",
+    "keywords": [
+        "Electron",
+        "quick",
+        "start",
+        "tutorial",
+        "demo"
+    ],
+    "author": "GitHub",
+    "license": "CC0-1.0",
+    "devDependencies": {
+        "electron": "^22.0.0",
+        "electron-packager": "^17.1.1"
+    },
+    "dependencies": {
+        "path": "^0.12.7",
+        "three": "^0.147.0",
+        "three.js": "^0.77.0"
+    }
+}
