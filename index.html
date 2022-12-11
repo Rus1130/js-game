@@ -19,7 +19,10 @@
         y: two.height / 2,
         playerWidth: 50,
         playerHeight: 50,
-        speed: 1
+        upSpeed: 1,
+        downSpeed: 1,
+        leftSpeed: 1,
+        rightSpeed: 1,
     }
 
     const gameData = {
@@ -27,39 +30,82 @@
         down: 's',
         left: 'a',
         right: 'd',
-        intervalLength: 20
+        intervalLength: 20,
+        outOfBoundsX: false,
+        outOfBoundsY: false,
+        borderOffset: 5
     }
     
-    let rect = two.makeRectangle(two.width / 2, two.height / 2, 50 ,50);
-    rect.id = 'player';
+    let player = two.makeRectangle(two.width / 2, two.height / 2, 50 ,50);
+    player.id = 'player';
+    player.fill = 'red'
+    player.stroke = 'red'
+
+    let borderLeft = two.makeRectangle(-gameData.borderOffset, 0, 5, two.height * 2);
+    let borderRight = two.makeRectangle(two.width + gameData.borderOffset, 0, 5, two.height * 2);
+    let borderTop = two.makeRectangle(0, -gameData.borderOffset, two.width * 2, 5);
+    let borderBottom = two.makeRectangle(0, two.height + gameData.borderOffset, two.width * 2, 5);
+
+    borderLeft.id = 'borderLeft'
+    borderRight.id = 'borderRight'
+    borderTop.id = 'borderTop'
+    borderBottom.id = 'borderBottom'
+
+    borderLeft.fill = 'blue'
+    borderRight.fill = 'blue'
+    borderTop.fill = 'blue'
+    borderBottom.fill = 'blue'
+
+    window.onresize = () => {
+        borderRight.translation.x = two.width + gameData.borderOffset;
+        borderRight.height = two.height * 2;
+
+        borderBottom.translation.y = two.height + gameData.borderOffset;
+        borderBottom.width = two.width * 2;
+
+        borderTop.width = two.width * 2;
+
+        borderLeft.height = two.height * 2;
+    }
+
+    function checkCollision(rect, colliders){
+        let collision = false;
+        let collider = undefined;
+        for(i = 0; i < colliders.length; i++){
+            let rectMinX = rect.translation._x - rect.width / 2;
+            let rectMaxX = rect.translation._x + rect.width / 2;
+            let rectMinY = rect.translation._y - rect.height / 2;
+            let rectMaxY = rect.translation._y + rect.height / 2;
+
+            let colliderMinX = colliders[i].translation._x - colliders[i].width / 2;
+            let colliderMaxX = colliders[i].translation._x + colliders[i].width / 2;
+            let colliderMinY = colliders[i].translation._y - colliders[i].height / 2;
+            let colliderMaxY = colliders[i].translation._y + colliders[i].height / 2;
+
+            if(rectMinX < colliderMaxX && rectMaxX > colliderMinX && rectMinY < colliderMaxY && rectMaxY > colliderMinY){
+                collider = colliders[i].id;
+                collision = true;
+                break;
+            }
+        }
+        return [collision, collider];
+    }
 
     function movePlayer(x, y){
-        // deny move if the player is out of the screen
-        let outOfBoundsX = false;
-        let outOfBoundsY = false;
-        if(playerData.x + x < (playerData.playerWidth / 2) || playerData.x + x > two.width - (playerData.playerWidth / 2)){
-            outOfBoundsX = true;
-        }
-        if(playerData.y + y < (playerData.playerHeight / 2) || playerData.y + y > two.height - (playerData.playerHeight / 2)){
-            outOfBoundsY = true;
-        }
 
-        if(!outOfBoundsX){
-            playerData.x += x;
-            rect.translation._x += playerData.x;
-        }
+        playerData.x += x;
+        playerData.y += y;
+
+        player.translation._x += playerData.x;
+        player.translation._y += playerData.y;
         
-        if(!outOfBoundsY){
-            playerData.y += y;
-            rect.translation._y += playerData.y;
-        }
         
 
         
         
-
+        
         // move the player
-        rect.translation.set(playerData.x, playerData.y);
+        player.translation.set(playerData.x, playerData.y);
     }
 
 
@@ -68,6 +114,7 @@
     function playerController(){
         const keys = {};
         const friction = 0.9;
+
         document.onkeydown = e => {
             keys[e.key] = true;
         };
@@ -77,18 +124,42 @@
         };
 
         function move(){
+            let isColliding = checkCollision(player, [borderLeft, borderRight, borderTop, borderBottom])[0];
+            let collider = checkCollision(player, [borderLeft, borderRight, borderTop, borderBottom])[1];
+
+            // check if the player is about to collide with a border, if so, stop them from moving
+            if(isColliding){
+                playerData.vx = 0;
+                playerData.vy = 0;
+
+                if(collider == 'borderLeft'){
+                    playerData.leftSpeed = -2;
+                } else if(collider == 'borderRight'){
+                    playerData.rightSpeed = -2;
+                } else if(collider == 'borderTop'){
+                    playerData.upSpeed = -2;
+                } else if(collider == 'borderBottom'){
+                    playerData.downSpeed = -2;
+                }
+            } else {
+                playerData.leftSpeed = 1;
+                playerData.rightSpeed = 1;
+                playerData.upSpeed = 1;
+                playerData.downSpeed = 1;
+            }
+
+
             if(keys[gameData.up]){
-                playerData.vy -= playerData.speed;
-                
+                playerData.vy -= playerData.upSpeed;
             }
             if(keys[gameData.down]){
-                playerData.vy += playerData.speed;
+                playerData.vy += playerData.downSpeed;
             }
             if(keys[gameData.left]){
-                playerData.vx -= playerData.speed;
+                playerData.vx -= playerData.leftSpeed;
             }
             if(keys[gameData.right]){
-                playerData.vx += playerData.speed;              
+                playerData.vx += playerData.rightSpeed;         
             }
 
             
@@ -101,41 +172,6 @@
     }
 
     playerController()
-
-    /*
-    function playerController(){
-        const player = document.getElementById('player');
-        const playerRect = player.getBoundingClientRect();
-        const areaRect = area.getBoundingClientRect();
-        const keys = {};
-        const friction = 0.9;
-        window.addEventListener('keydown', function(e){
-            keys[e.key] = true;
-        });
-        window.addEventListener('keyup', function(e){
-            keys[e.key] = false;
-        });
-        function movePlayer(){
-            if(!gameData.playing) return;
-            if(keys[gameData.up]){
-                gameData.y -= gameData.speed;
-            }
-            if(keys[gameData.down]){
-                gameData.y += gameData.speed;
-            }
-            if(keys[gameData.left]){
-                gameData.x -= gameData.speed;
-            }
-            if(keys[gameData.right]){
-                gameData.x += gameData.speed;
-            }
-            
-            gameData.x *= friction;
-            gameData.y *= friction;
-            
-            move(gameData.x, gameData.y);
-        }
-    */
 
 
     // npm start
