@@ -1,72 +1,118 @@
-<style>
-    body {
-        margin: 0;
-        overflow: hidden;
-    }
-</style>
-
 <head>
     <meta charset="UTF-8">
     <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';">
-    <title>Hello World!</title>
-    <script src="three.js"></script>
+    <script src="two.js"></script>
 </head>
-<body>
-    <div id="root"></div>
-</body>
-
+<body></body>
 <script>
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, 500 / 500, 0.1, 1000);
-
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(document.body.clientWidth, document.body.clientHeight);
-    document.body.appendChild(renderer.domElement);
-
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({color: 0x00ff00});
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
-
-    camera.position.z = 5;
-
-    function animate() {
-        requestAnimationFrame(animate);
-
-        cube.rotation.x += 0.01;
-        cube.rotation.y += 0.01;
-        scene.add(cube);
-        renderer.render(scene, camera);
-
-    };
-
+    let two = new Two({
+        fullscreen: true,
+        autostart: true
+    }).appendTo(document.body);
     
+    let rect = two.makeRectangle(two.width / 2, two.height / 2, 50 ,50);
+    rect.id = 'player';
 
-    window.addEventListener( 'resize', onWindowResize, false );
-    function onWindowResize(){
-        camera.aspect = document.body.clientWidth / document.body.clientWidth;
-        renderer.setSize(document.body.clientWidth, document.body.clientWidth);
+    function movePlayer(x, y){
+        playerData.x += x;
+        playerData.y += y;
+
+        rect.translation._x += playerData.x;
+        rect.translation._y += playerData.y;
+
+        // move the player
+        rect.translation.set(playerData.x, playerData.y);
     }
 
-    animate();
-    
+    const playerData = {
+        vx: 0,
+        vy: 0,
+        x: two.width / 2,
+        y: two.height / 2,
+        speed: 1
+    }
 
-    let lastPosX = document.body.clientWidth;
-    let lastPosY = document.body.clientHeight;
+    const gameData = {
+        up: 'w',
+        down: 's',
+        left: 'a',
+        right: 'd',
+        intervalLength: 20
+    }
 
-    let diffX;
-    let diffY;
+    function playerController(){
 
-    window.addEventListener('resize', function() {
-        let diffX = document.body.clientWidth - lastPosX;
-        let diffY = document.body.clientHeight - lastPosY;
+        const player = document.getElementById('player');
+        const keys = {};
+        const friction = 0.9;
+        document.onkeydown = e => {
+            keys[e.key] = true;
+        };
 
-        lastPosX = document.body.clientWidth;
-        lastPosY = document.body.clientHeight;
+        document.onkeyup = e => {
+            keys[e.key] = false;
+        };
 
-        console.log(diffX, diffY)
-    });
+        function move(){
+            if(keys[gameData.up]){
+                playerData.vy -= playerData.speed;
+            }
+            if(keys[gameData.down]){
+                playerData.vy += playerData.speed;
+            }
+            if(keys[gameData.left]){
+                playerData.vx -= playerData.speed;
+            }
+            if(keys[gameData.right]){
+                playerData.vx += playerData.speed;
+            }
+            
+            playerData.vx *= friction;
+            playerData.vy *= friction;
+            
+            movePlayer(playerData.vx, playerData.vy);
+        }
+        setInterval(move, gameData.intervalLength);
+    }
+
+    playerController()
+
+    /*
+    function playerController(){
+        const player = document.getElementById('player');
+        const playerRect = player.getBoundingClientRect();
+        const areaRect = area.getBoundingClientRect();
+        const keys = {};
+        const friction = 0.9;
+        window.addEventListener('keydown', function(e){
+            keys[e.key] = true;
+        });
+        window.addEventListener('keyup', function(e){
+            keys[e.key] = false;
+        });
+        function movePlayer(){
+            if(!gameData.playing) return;
+            if(keys[gameData.up]){
+                gameData.y -= gameData.speed;
+            }
+            if(keys[gameData.down]){
+                gameData.y += gameData.speed;
+            }
+            if(keys[gameData.left]){
+                gameData.x -= gameData.speed;
+            }
+            if(keys[gameData.right]){
+                gameData.x += gameData.speed;
+            }
+            
+            gameData.x *= friction;
+            gameData.y *= friction;
+            
+            move(gameData.x, gameData.y);
+        }
+    */
+
 
     // npm start
     // electron-packager ./ JS-Game --platform=win32 --arch=ia32 ./JS-Game
