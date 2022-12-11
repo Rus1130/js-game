@@ -10,26 +10,15 @@
         fullscreen: true,
         autostart: true
     }).appendTo(document.body);
+
     
-    let rect = two.makeRectangle(two.width / 2, two.height / 2, 50 ,50);
-    rect.id = 'player';
-
-    function movePlayer(x, y){
-        playerData.x += x;
-        playerData.y += y;
-
-        rect.translation._x += playerData.x;
-        rect.translation._y += playerData.y;
-
-        // move the player
-        rect.translation.set(playerData.x, playerData.y);
-    }
-
     const playerData = {
         vx: 0,
         vy: 0,
         x: two.width / 2,
         y: two.height / 2,
+        playerWidth: 50,
+        playerHeight: 50,
         speed: 1
     }
 
@@ -40,10 +29,43 @@
         right: 'd',
         intervalLength: 20
     }
+    
+    let rect = two.makeRectangle(two.width / 2, two.height / 2, 50 ,50);
+    rect.id = 'player';
+
+    function movePlayer(x, y){
+        // deny move if the player is out of the screen
+        let outOfBoundsX = false;
+        let outOfBoundsY = false;
+        if(playerData.x + x < (playerData.playerWidth / 2) || playerData.x + x > two.width - (playerData.playerWidth / 2)){
+            outOfBoundsX = true;
+        }
+        if(playerData.y + y < (playerData.playerHeight / 2) || playerData.y + y > two.height - (playerData.playerHeight / 2)){
+            outOfBoundsY = true;
+        }
+
+        if(!outOfBoundsX){
+            playerData.x += x;
+            rect.translation._x += playerData.x;
+        }
+        
+        if(!outOfBoundsY){
+            playerData.y += y;
+            rect.translation._y += playerData.y;
+        }
+        
+
+        
+        
+
+        // move the player
+        rect.translation.set(playerData.x, playerData.y);
+    }
+
+
+
 
     function playerController(){
-
-        const player = document.getElementById('player');
         const keys = {};
         const friction = 0.9;
         document.onkeydown = e => {
@@ -57,6 +79,7 @@
         function move(){
             if(keys[gameData.up]){
                 playerData.vy -= playerData.speed;
+                
             }
             if(keys[gameData.down]){
                 playerData.vy += playerData.speed;
@@ -65,8 +88,9 @@
                 playerData.vx -= playerData.speed;
             }
             if(keys[gameData.right]){
-                playerData.vx += playerData.speed;
+                playerData.vx += playerData.speed;              
             }
+
             
             playerData.vx *= friction;
             playerData.vy *= friction;
