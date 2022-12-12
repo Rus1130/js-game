@@ -17,7 +17,8 @@
         left: 'a',
         right: 'd',
         intervalLength: 20,
-        borderOffset: 5,
+        borderOffset: 125, // 125
+        borderWidth: 150, // 150
         frictionCoefficient: 0.9
     }
     
@@ -31,16 +32,41 @@
         speed: 1,
         allowBorderWrap: true,
     }
+
+    function wrapController(element, elementData){
+        let isColliding = checkCollision(element, [borderLeft, borderRight, borderTop, borderBottom])[0];
+        let collider = checkCollision(element, [borderLeft, borderRight, borderTop, borderBottom])[1];
+
+
+        if(isColliding && elementData.allowBorderWrap){
+            if(collider == 'borderLeft'){
+                elementData.x = (two.width - borderLeft.translation._x) - (elementData.width / 2) - (gameData.borderWidth / 2);
+                elementData.allowBorderWrap = false;
+            }
+            if(collider == 'borderRight'){
+                elementData.x = (elementData.width / 2) + (gameData.borderWidth / 2) + borderLeft.translation._x;
+                elementData.allowBorderWrap = false;
+            }
+            if(collider == 'borderTop'){
+                elementData.y = (two.height - borderTop.translation._y) - (elementData.height / 2)  - (gameData.borderWidth / 2);
+                elementData.allowBorderWrap = false;
+            }
+            if(collider == 'borderBottom'){
+                elementData.y = (elementData.height / 2) + (gameData.borderWidth / 2) + borderTop.translation._y;
+                elementData.allowBorderWrap = false;
+            }
+        }
+    }
     
     let player = two.makeRectangle(two.width / 2, two.height / 2, 50 ,50);
     player.id = 'player';
-    player.fill = 'red'
-    player.stroke = 'red'
+    player.fill = 'red';
+    player.stroke = 'red';
 
-    let borderLeft = two.makeRectangle(-gameData.borderOffset, 0, 5, two.height * 2);
-    let borderRight = two.makeRectangle(two.width + gameData.borderOffset, 0, 5, two.height * 2);
-    let borderTop = two.makeRectangle(0, -gameData.borderOffset, two.width * 2, 5);
-    let borderBottom = two.makeRectangle(0, two.height + gameData.borderOffset, two.width * 2, 5);
+    let borderLeft = two.makeRectangle(-gameData.borderOffset, 0, gameData.borderWidth, two.height * 2);
+    let borderRight = two.makeRectangle(two.width + gameData.borderOffset, 0, gameData.borderWidth, two.height * 2);
+    let borderTop = two.makeRectangle(0, -gameData.borderOffset, two.width * 2, gameData.borderWidth);
+    let borderBottom = two.makeRectangle(0, two.height + gameData.borderOffset, two.width * 2, gameData.borderWidth);
 
     borderLeft.id = 'borderLeft'
     borderRight.id = 'borderRight'
@@ -117,30 +143,7 @@
         };
 
         function move(){
-            let isColliding = checkCollision(player, [borderLeft, borderRight, borderTop, borderBottom])[0];
-            let collider = checkCollision(player, [borderLeft, borderRight, borderTop, borderBottom])[1];
-
-
-            if(isColliding && playerData.allowBorderWrap){
-                if(collider == 'borderLeft'){
-                    playerData.x = (two.width - borderLeft.translation._x) - (playerData.width / 2);
-                    playerData.allowBorderWrap = false;
-                }
-                if(collider == 'borderRight'){
-                    playerData.x = (playerData.width / 2) + borderLeft.translation._x;
-                    playerData.allowBorderWrap = false;
-                }
-                if(collider == 'borderTop'){
-                    playerData.y = (two.height - borderTop.translation._y) - (playerData.height / 2);
-                    playerData.allowBorderWrap = false;
-                }
-                if(collider == 'borderBottom'){
-                    playerData.y = (playerData.height / 2) + borderTop.translation._y;
-                    playerData.allowBorderWrap = false;
-                }
-            }
-
-
+            wrapController(player, playerData)
             if(keys[gameData.up]){
                 playerData.vy -= playerData.speed;
                 playerData.allowBorderWrap = true;
