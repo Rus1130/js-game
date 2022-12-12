@@ -17,7 +17,7 @@
         left: 'a',
         right: 'd',
         intervalLength: 20,
-        borderOffset: 125, // 125
+        borderOffset: 150, // 125
         borderWidth: 150, // 150
         frictionCoefficient: 0.9
     }
@@ -30,30 +30,30 @@
         width: 50,
         height: 50,
         speed: 1,
-        allowBorderWrap: true,
+        borderCollision: false,
     }
 
-    function wrapController(element, elementData){
+    function collisionController(element, elementData){
         let isColliding = checkCollision(element, [borderLeft, borderRight, borderTop, borderBottom])[0];
         let collider = checkCollision(element, [borderLeft, borderRight, borderTop, borderBottom])[1];
 
 
-        if(isColliding && elementData.allowBorderWrap){
+        if(isColliding && !elementData.borderCollision){
             if(collider == 'borderLeft'){
                 elementData.x = (two.width - borderLeft.translation._x) - (elementData.width / 2) - (gameData.borderWidth / 2);
-                elementData.allowBorderWrap = false;
+                elementData.borderCollision = true;
             }
             if(collider == 'borderRight'){
                 elementData.x = (elementData.width / 2) + (gameData.borderWidth / 2) + borderLeft.translation._x;
-                elementData.allowBorderWrap = false;
+                elementData.borderCollision = true;
             }
             if(collider == 'borderTop'){
                 elementData.y = (two.height - borderTop.translation._y) - (elementData.height / 2)  - (gameData.borderWidth / 2);
-                elementData.allowBorderWrap = false;
+                elementData.borderCollision = true;
             }
             if(collider == 'borderBottom'){
                 elementData.y = (elementData.height / 2) + (gameData.borderWidth / 2) + borderTop.translation._y;
-                elementData.allowBorderWrap = false;
+                elementData.borderCollision = true;
             }
         }
     }
@@ -68,15 +68,31 @@
     let borderTop = two.makeRectangle(0, -gameData.borderOffset, two.width * 2, gameData.borderWidth);
     let borderBottom = two.makeRectangle(0, two.height + gameData.borderOffset, two.width * 2, gameData.borderWidth);
 
+    // make a border for the screen
+    let screenLeft = two.makeRectangle(-gameData.borderOffset + 123, 0, 2, two.height * 2);
+    let screenRight = two.makeRectangle(two.width + gameData.borderOffset - 123, 0, 2, two.height * 2);
+    let screenTop = two.makeRectangle(0, -gameData.borderOffset + 123, two.width * 2, 2);
+    let screenBottom = two.makeRectangle(0, two.height + gameData.borderOffset - 123, two.width * 2, 2);
+
     borderLeft.id = 'borderLeft'
     borderRight.id = 'borderRight'
     borderTop.id = 'borderTop'
     borderBottom.id = 'borderBottom'
 
+    screenLeft.id = 'screenLeft'
+    screenRight.id = 'screenRight'
+    screenTop.id = 'screenTop'
+    screenBottom.id = 'screenBottom'
+
     borderLeft.fill = 'blue'
     borderRight.fill = 'blue'
     borderTop.fill = 'blue'
     borderBottom.fill = 'blue'
+
+    screenLeft.fill = 'black'
+    screenRight.fill = 'black'
+    screenTop.fill = 'black'
+    screenBottom.fill = 'black'
 
     window.onresize = () => {
         borderRight.translation.x = two.width + gameData.borderOffset;
@@ -143,22 +159,22 @@
         };
 
         function move(){
-            wrapController(player, playerData)
+            collisionController(player, playerData)
             if(keys[gameData.up]){
                 playerData.vy -= playerData.speed;
-                playerData.allowBorderWrap = true;
+                playerData.borderCollision = false;
             }
             if(keys[gameData.down]){
                 playerData.vy += playerData.speed;
-                playerData.allowBorderWrap = true;
+                playerData.borderCollision = false;
             }
             if(keys[gameData.left]){
                 playerData.vx -= playerData.speed;
-                playerData.allowBorderWrap = true;
+                playerData.borderCollision = false;
             }
             if(keys[gameData.right]){
                 playerData.vx += playerData.speed;   
-                playerData.allowBorderWrap = true;      
+                playerData.borderCollision = false;  
             }
 
             
