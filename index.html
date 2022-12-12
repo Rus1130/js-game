@@ -17,8 +17,6 @@
         left: 'a',
         right: 'd',
         intervalLength: 20,
-        outOfBoundsX: false,
-        outOfBoundsY: false,
         borderOffset: 6,
         frictionCoefficient: 0.9
     }
@@ -31,6 +29,7 @@
         width: 50,
         height: 50,
         speed: 1,
+        allowBorderWrap: true,
     }
     
     let player = two.makeRectangle(two.width / 2, two.height / 2, 50 ,50);
@@ -118,36 +117,42 @@
             let isColliding = checkCollision(player, [borderLeft, borderRight, borderTop, borderBottom])[0];
             let collider = checkCollision(player, [borderLeft, borderRight, borderTop, borderBottom])[1];
 
-            // check if the player is about to collide with a border, if so, stop them from moving
-            if(isColliding){
 
-
+            if(isColliding && playerData.allowBorderWrap){
                 if(collider == 'borderLeft'){
-                    playerData.x = (two.width - borderLeft.translation._x) - playerData.width;
+                    playerData.x = (two.width - borderLeft.translation._x) - (playerData.width / 2);
+                    playerData.allowBorderWrap = false;
                 }
                 if(collider == 'borderRight'){
                     playerData.x = (playerData.width / 2) + borderLeft.translation._x;
+                    playerData.allowBorderWrap = false;
                 }
                 if(collider == 'borderTop'){
-                    playerData.y = (two.height - borderTop.translation._y) - playerData.height;
+                    playerData.y = (two.height - borderTop.translation._y) - (playerData.height / 2);
+                    playerData.allowBorderWrap = false;
                 }
                 if(collider == 'borderBottom'){
                     playerData.y = (playerData.height / 2) + borderTop.translation._y;
+                    playerData.allowBorderWrap = false;
                 }
             }
 
 
             if(keys[gameData.up]){
                 playerData.vy -= playerData.speed;
+                playerData.allowBorderWrap = true;
             }
             if(keys[gameData.down]){
                 playerData.vy += playerData.speed;
+                playerData.allowBorderWrap = true;
             }
             if(keys[gameData.left]){
                 playerData.vx -= playerData.speed;
+                playerData.allowBorderWrap = true;
             }
             if(keys[gameData.right]){
-                playerData.vx += playerData.speed;         
+                playerData.vx += playerData.speed;   
+                playerData.allowBorderWrap = true;      
             }
 
             
