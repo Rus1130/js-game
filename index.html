@@ -47,7 +47,6 @@
     let player = two.makeRectangle(two.width / 2, two.height / 2, 50 ,50);
     let playerCannon = two.makeRectangle(playerData.x + 25, playerData.y, 50, 20);
     let playerCannonBase = two.makeRectangle(playerData.x, playerData.y, 30, 30);
-    let playerCannonCap1 = two.makeRectangle(playerData.x, playerData.y, 20, 20);
 
     player.fill = 'red';
     player.stroke = 'red';
@@ -61,9 +60,6 @@
     playerCannonBase.stroke = 'black';
     playerCannonBase.id = 'player';
 
-    playerCannonCap1.fill = '#303030';
-    playerCannonCap1.stroke = '#303030';
-    playerCannonCap1.id = 'player';
 
     let borderLeft = two.makeRectangle(-gameData.borderOffset, 0, gameData.borderWidth, two.height * 2);
     let borderRight = two.makeRectangle(two.width + gameData.borderOffset, 0, gameData.borderWidth, two.height * 2);
@@ -104,16 +100,12 @@
         let angle = Math.atan2(playerData.mouseY - playerData.y, playerData.mouseX - playerData.x);
         playerCannon.rotation = angle;
         playerCannonBase.rotation = angle;
-        playerCannonCap1.rotation = angle;
 
         playerCannon.translation.x = playerData.x + 25 * Math.cos(angle);
         playerCannon.translation.y = playerData.y + 25 * Math.sin(angle);
 
         playerCannonBase.translation.x = playerData.x;
         playerCannonBase.translation.y = playerData.y;
-
-        playerCannonCap1.translation.x = playerData.x;
-        playerCannonCap1.translation.y = playerData.y;
     }
 
     window.onresize = () => {
