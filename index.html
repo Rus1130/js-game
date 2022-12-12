@@ -11,20 +11,6 @@
         autostart: true
     }).appendTo(document.body);
 
-    
-    const playerData = {
-        vx: 0,
-        vy: 0,
-        x: two.width / 2,
-        y: two.height / 2,
-        playerWidth: 50,
-        playerHeight: 50,
-        upSpeed: 1,
-        downSpeed: 1,
-        leftSpeed: 1,
-        rightSpeed: 1,
-    }
-
     const gameData = {
         up: 'w',
         down: 's',
@@ -33,7 +19,18 @@
         intervalLength: 20,
         outOfBoundsX: false,
         outOfBoundsY: false,
-        borderOffset: 5
+        borderOffset: 6,
+        frictionCoefficient: 0.9
+    }
+    
+    const playerData = {
+        vx: 0,
+        vy: 0,
+        x: two.width / 2,
+        y: two.height / 2,
+        width: 50,
+        height: 50,
+        speed: 1,
     }
     
     let player = two.makeRectangle(two.width / 2, two.height / 2, 50 ,50);
@@ -99,12 +96,7 @@
         player.translation._x += playerData.x;
         player.translation._y += playerData.y;
         
-        
 
-        
-        
-        
-        // move the player
         player.translation.set(playerData.x, playerData.y);
     }
 
@@ -113,7 +105,6 @@
 
     function playerController(){
         const keys = {};
-        const friction = 0.9;
 
         document.onkeydown = e => {
             keys[e.key] = true;
@@ -129,42 +120,39 @@
 
             // check if the player is about to collide with a border, if so, stop them from moving
             if(isColliding){
-                playerData.vx = 0;
-                playerData.vy = 0;
+
 
                 if(collider == 'borderLeft'){
-                    playerData.leftSpeed = -2;
-                } else if(collider == 'borderRight'){
-                    playerData.rightSpeed = -2;
-                } else if(collider == 'borderTop'){
-                    playerData.upSpeed = -2;
-                } else if(collider == 'borderBottom'){
-                    playerData.downSpeed = -2;
+                    playerData.x = (two.width - borderLeft.translation._x) - playerData.width;
                 }
-            } else {
-                playerData.leftSpeed = 1;
-                playerData.rightSpeed = 1;
-                playerData.upSpeed = 1;
-                playerData.downSpeed = 1;
+                if(collider == 'borderRight'){
+                    playerData.x = (playerData.width / 2) + borderLeft.translation._x;
+                }
+                if(collider == 'borderTop'){
+                    playerData.y = (two.height - borderTop.translation._y) - playerData.height;
+                }
+                if(collider == 'borderBottom'){
+                    playerData.y = (playerData.height / 2) + borderTop.translation._y;
+                }
             }
 
 
             if(keys[gameData.up]){
-                playerData.vy -= playerData.upSpeed;
+                playerData.vy -= playerData.speed;
             }
             if(keys[gameData.down]){
-                playerData.vy += playerData.downSpeed;
+                playerData.vy += playerData.speed;
             }
             if(keys[gameData.left]){
-                playerData.vx -= playerData.leftSpeed;
+                playerData.vx -= playerData.speed;
             }
             if(keys[gameData.right]){
-                playerData.vx += playerData.rightSpeed;         
+                playerData.vx += playerData.speed;         
             }
 
             
-            playerData.vx *= friction;
-            playerData.vy *= friction;
+            playerData.vx *= gameData.frictionCoefficient;
+            playerData.vy *= gameData.frictionCoefficient;
             
             movePlayer(playerData.vx, playerData.vy);
         }

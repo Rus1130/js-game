@@ -1,7 +1,7 @@
 {
-    "name": "electron-quick-start",
+    "name": "funny-cool-js-game",
     "version": "1.0.0",
-    "description": "A minimal Electron application",
+    "description": "a really cool js game im making :)",
     "main": "main.js",
     "scripts": {
         "start": "electron ."
