@@ -1,3 +1,8 @@
+<style>
+    :root{
+        cursor: crosshair;
+    }
+</style>
 <head>
     <meta charset="UTF-8">
     <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
@@ -16,11 +21,14 @@
         down: 's',
         left: 'a',
         right: 'd',
+        toggleLock: 'l',
         intervalLength: 20,
-        borderOffset: 150, // 125
+        borderOffset: 125, // 125
         borderWidth: 150, // 150
-        frictionCoefficient: 0.9
+        frictionCoefficient: 0.9,
     }
+
+    
     
     const playerData = {
         vx: 0,
@@ -31,37 +39,31 @@
         height: 50,
         speed: 1,
         borderCollision: false,
+        mouseX: 0,
+        mouseY: 0,
     }
 
-    function collisionController(element, elementData){
-        let isColliding = checkCollision(element, [borderLeft, borderRight, borderTop, borderBottom])[0];
-        let collider = checkCollision(element, [borderLeft, borderRight, borderTop, borderBottom])[1];
-
-
-        if(isColliding && !elementData.borderCollision){
-            if(collider == 'borderLeft'){
-                elementData.x = (two.width - borderLeft.translation._x) - (elementData.width / 2) - (gameData.borderWidth / 2);
-                elementData.borderCollision = true;
-            }
-            if(collider == 'borderRight'){
-                elementData.x = (elementData.width / 2) + (gameData.borderWidth / 2) + borderLeft.translation._x;
-                elementData.borderCollision = true;
-            }
-            if(collider == 'borderTop'){
-                elementData.y = (two.height - borderTop.translation._y) - (elementData.height / 2)  - (gameData.borderWidth / 2);
-                elementData.borderCollision = true;
-            }
-            if(collider == 'borderBottom'){
-                elementData.y = (elementData.height / 2) + (gameData.borderWidth / 2) + borderTop.translation._y;
-                elementData.borderCollision = true;
-            }
-        }
-    }
     
     let player = two.makeRectangle(two.width / 2, two.height / 2, 50 ,50);
-    player.id = 'player';
+    let playerCannon = two.makeRectangle(playerData.x + 25, playerData.y, 50, 20);
+    let playerCannonBase = two.makeRectangle(playerData.x, playerData.y, 30, 30);
+    let playerCannonCap1 = two.makeRectangle(playerData.x, playerData.y, 20, 20);
+
     player.fill = 'red';
     player.stroke = 'red';
+    player.id = 'player';
+
+    playerCannon.fill = 'black';
+    playerCannon.stroke = 'black';
+    playerCannon.id = 'player';
+
+    playerCannonBase.fill = 'black';
+    playerCannonBase.stroke = 'black';
+    playerCannonBase.id = 'player';
+
+    playerCannonCap1.fill = '#303030';
+    playerCannonCap1.stroke = '#303030';
+    playerCannonCap1.id = 'player';
 
     let borderLeft = two.makeRectangle(-gameData.borderOffset, 0, gameData.borderWidth, two.height * 2);
     let borderRight = two.makeRectangle(two.width + gameData.borderOffset, 0, gameData.borderWidth, two.height * 2);
@@ -94,6 +96,26 @@
     screenTop.fill = 'black'
     screenBottom.fill = 'black'
 
+    function constantUpdate(){
+        updateCannon();
+    }
+
+    function updateCannon(){
+        let angle = Math.atan2(playerData.mouseY - playerData.y, playerData.mouseX - playerData.x);
+        playerCannon.rotation = angle;
+        playerCannonBase.rotation = angle;
+        playerCannonCap1.rotation = angle;
+
+        playerCannon.translation.x = playerData.x + 25 * Math.cos(angle);
+        playerCannon.translation.y = playerData.y + 25 * Math.sin(angle);
+
+        playerCannonBase.translation.x = playerData.x;
+        playerCannonBase.translation.y = playerData.y;
+
+        playerCannonCap1.translation.x = playerData.x;
+        playerCannonCap1.translation.y = playerData.y;
+    }
+
     window.onresize = () => {
         borderRight.translation.x = two.width + gameData.borderOffset;
         borderRight.height = two.height * 2;
@@ -105,31 +127,69 @@
 
         borderLeft.height = two.height * 2;
 
+        screenRight.translation.x = two.width + gameData.borderOffset - 123;
+        screenRight.height = two.height * 2;
+
+        screenBottom.translation.y = two.height + gameData.borderOffset - 123;
+        screenBottom.width = two.width * 2;
+
+        screenTop.width = two.width * 2;
+        screenLeft.height = two.height * 2;
+
         playerData.x = two.width / 2;
         playerData.y = two.height / 2;
     }
 
-    function checkCollision(rect, colliders){
+    function checkCollision(rects, colliders){
         let collision = false;
         let collider = undefined;
-        for(i = 0; i < colliders.length; i++){
-            let rectMinX = rect.translation._x - rect.width / 2;
-            let rectMaxX = rect.translation._x + rect.width / 2;
-            let rectMinY = rect.translation._y - rect.height / 2;
-            let rectMaxY = rect.translation._y + rect.height / 2;
+        for(i = 0; i < rects.length; i++){
+            if(collision) break;
+            for(j = 0; j < colliders.length; j++){
+                let rectMinX = rects[i].translation._x - rects[i].width / 2;
+                let rectMaxX = rects[i].translation._x + rects[i].width / 2;
+                let rectMinY = rects[i].translation._y - rects[i].height / 2;
+                let rectMaxY = rects[i].translation._y + rects[i].height / 2;
 
-            let colliderMinX = colliders[i].translation._x - colliders[i].width / 2;
-            let colliderMaxX = colliders[i].translation._x + colliders[i].width / 2;
-            let colliderMinY = colliders[i].translation._y - colliders[i].height / 2;
-            let colliderMaxY = colliders[i].translation._y + colliders[i].height / 2;
+                let colliderMinX = colliders[j].translation._x - colliders[j].width / 2;
+                let colliderMaxX = colliders[j].translation._x + colliders[j].width / 2;
+                let colliderMinY = colliders[j].translation._y - colliders[j].height / 2;
+                let colliderMaxY = colliders[j].translation._y + colliders[j].height / 2;
 
-            if(rectMinX < colliderMaxX && rectMaxX > colliderMinX && rectMinY < colliderMaxY && rectMaxY > colliderMinY){
-                collider = colliders[i].id;
-                collision = true;
-                break;
+                if(rectMinX < colliderMaxX && rectMaxX > colliderMinX && rectMinY < colliderMaxY && rectMaxY > colliderMinY){
+                    collider = colliders[j].id;
+                    collision = true;
+                    break;
+                }
             }
+            if(collision) break;
         }
         return [collision, collider];
+    }
+
+    function borderCollisionController(elements, elementData){
+        let isColliding = checkCollision(elements, [borderLeft, borderRight, borderTop, borderBottom])[0];
+        let collider = checkCollision(elements, [borderLeft, borderRight, borderTop, borderBottom])[1];
+
+
+        if(isColliding && !elementData.borderCollision){
+            if(collider == 'borderLeft'){
+                elementData.x = (two.width - borderLeft.translation._x) - (elementData.width / 2) - (gameData.borderWidth / 2);
+                elementData.borderCollision = true;
+            }
+            if(collider == 'borderRight'){
+                elementData.x = (elementData.width / 2) + (gameData.borderWidth / 2) + borderLeft.translation._x;
+                elementData.borderCollision = true;
+            }
+            if(collider == 'borderTop'){
+                elementData.y = (two.height - borderTop.translation._y) - (elementData.height / 2)  - (gameData.borderWidth / 2);
+                elementData.borderCollision = true;
+            }
+            if(collider == 'borderBottom'){
+                elementData.y = (elementData.height / 2) + (gameData.borderWidth / 2) + borderTop.translation._y;
+                elementData.borderCollision = true;
+            }
+        }
     }
 
     function movePlayer(x, y){
@@ -139,7 +199,6 @@
 
         player.translation._x += playerData.x;
         player.translation._y += playerData.y;
-        
 
         player.translation.set(playerData.x, playerData.y);
     }
@@ -158,8 +217,15 @@
             keys[e.key] = false;
         };
 
+        document.onmousemove = e => {
+            playerData.mouseX = e.clientX
+            playerData.mouseY = e.clientY
+            updateCannon();
+            
+        }
+
         function move(){
-            collisionController(player, playerData)
+            borderCollisionController([player, playerCannon], playerData)
             if(keys[gameData.up]){
                 playerData.vy -= playerData.speed;
                 playerData.borderCollision = false;
@@ -177,11 +243,11 @@
                 playerData.borderCollision = false;  
             }
 
-            
             playerData.vx *= gameData.frictionCoefficient;
             playerData.vy *= gameData.frictionCoefficient;
             
             movePlayer(playerData.vx, playerData.vy);
+            updateCannon()
         }
         setInterval(move, gameData.intervalLength);
     }
