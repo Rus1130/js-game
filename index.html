@@ -2,6 +2,13 @@
     :root{
         cursor: crosshair;
     }
+    #debug {
+        z-index: 100;
+        position: absolute;
+    }
+    svg {
+        z-index: 0;
+    }
 </style>
 <head>
     <meta charset="UTF-8">
@@ -47,6 +54,8 @@
         mouseX: 0,
         mouseY: 0,
         cannonWear: 0,
+        keys: {},
+        angle: Math.atan2(this.mouseY - this.y, this.mouseX - this.x)
     }
 
     const debugData = {
@@ -58,6 +67,7 @@
         mouseX: 0,
         mouseY: 0,
         cannonWear: 0,
+        keys: {},
     }
 
     
@@ -115,18 +125,35 @@
     screenTop.fill = 'black'
     screenBottom.fill = 'black'
 
+    function constantUpdate(){
+        updateCannon();
+        debugData.x = playerData.x;
+        debugData.y = playerData.y;
+        debugData.vx = playerData.vx;
+        debugData.vy = playerData.vy;
+        debugData.borderCollision = playerData.borderCollision;
+        debugData.mouseX = playerData.mouseX;
+        debugData.mouseY = playerData.mouseY;
+        debugData.cannonWear = playerData.cannonWear;
+        debugData.keys = playerData.keys;
+
+        document.getElementById('debug').innerHTML = JSON.stringify(debugData, null, 4);
+
+    }
+
     function updateCannon(){
-        let angle = Math.atan2(playerData.mouseY - playerData.y, playerData.mouseX - playerData.x);
+
+        playerCannon.rotation = playerData.angle;
+        playerCannonBase.rotation = playerData.angle;
+
+        playerCannon.translation.x = playerData.x + 25 * Math.cos(playerData.angle);
+        playerCannon.translation.y = playerData.y + 25 * Math.sin(playerData.angle);
+
+        playerCannonBase.translation.x = playerData.x;
+        playerCannonBase.translation.y = playerData.y;
 
         setTimeout(() => {
-            playerCannon.rotation = angle;
-            playerCannonBase.rotation = angle;
-
-            playerCannon.translation.x = playerData.x + 25 * Math.cos(angle);
-            playerCannon.translation.y = playerData.y + 25 * Math.sin(angle);
-
-            playerCannonBase.translation.x = playerData.x;
-            playerCannonBase.translation.y = playerData.y;
+            playerData.angle = Math.atan2(playerData.mouseY - playerData.y, playerData.mouseX - playerData.x);
         }, playerData.cannonWear)
     }
 
@@ -221,12 +248,10 @@
 
 
     function playerController(){
-        const keys = {};
-
         function shoot(){
             let random = Math.floor(Math.random() * 200);
             if(random <= 40){
-                playerData.cannonWear += 1;
+                playerData.cannonWear += 5;
                 // round to the nearest tenth
                 playerData.cannonWear = Math.round(playerData.cannonWear);
             
@@ -235,14 +260,14 @@
         }
 
         document.onkeydown = e => {
-            keys[e.key] = true;
+            playerData.keys[e.key] = true;
             if(e.key == gameData.shoot){
                 shoot();
             }
         };
 
         document.onkeyup = e => {
-            keys[e.key] = false;
+            playerData.keys[e.key] = false;
         };
 
         document.onmousemove = e => {
@@ -260,19 +285,19 @@
 
         function move(){
             borderCollisionController([player, playerCannon], playerData)
-            if(keys[gameData.up]){
+            if(playerData.keys[gameData.up]){
                 playerData.vy -= playerData.speed;
                 playerData.borderCollision = false;
             }
-            if(keys[gameData.down]){
+            if(playerData.keys[gameData.down]){
                 playerData.vy += playerData.speed;
                 playerData.borderCollision = false;
             }
-            if(keys[gameData.left]){
+            if(playerData.keys[gameData.left]){
                 playerData.vx -= playerData.speed;
                 playerData.borderCollision = false;
             }
-            if(keys[gameData.right]){
+            if(playerData.keys[gameData.right]){
                 playerData.vx += playerData.speed;   
                 playerData.borderCollision = false;  
             }
@@ -289,7 +314,7 @@
     buildPlayer();
     playerController();
 
-    setInterval(updateCannon, gameData.intervalLength);
+    setInterval(constantUpdate, gameData.intervalLength);
 
 
     // npm start
