@@ -110,6 +110,8 @@
         playerCannon.translation.x = playerData.x + 25 * Math.cos(angle);
         playerCannon.translation.y = playerData.y + 25 * Math.sin(angle);
 
+        // get the four corners of the cannon
+
         playerCannonBase.translation.x = playerData.x;
         playerCannonBase.translation.y = playerData.y;
     }
@@ -218,7 +220,6 @@
         document.onmousemove = e => {
             playerData.mouseX = e.clientX
             playerData.mouseY = e.clientY
-            updateCannon();
         }
 
         function move(){
@@ -244,13 +245,14 @@
             playerData.vy *= gameData.frictionCoefficient;
             
             movePlayer(playerData.vx, playerData.vy);
-            updateCannon()
         }
         setInterval(move, gameData.intervalLength);
     }
 
     buildPlayer();
     playerController();
+
+    setInterval(constantUpdate, gameData.intervalLength);
 
 
     // npm start
