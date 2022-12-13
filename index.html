@@ -26,9 +26,8 @@
         borderOffset: 20, // 125
         borderWidth: 150, // 150
         frictionCoefficient: 0.9,
+        cannonIntervalLength: 20,
     }
-
-    
     
     const playerData = {
         vx: 0,
@@ -41,6 +40,7 @@
         borderCollision: false,
         mouseX: 0,
         mouseY: 0,
+        cannonWear: 50,
     }
 
     
@@ -57,7 +57,7 @@
         player.stroke = 'red';
         player.id = 'player';
 
-        playerCannon.fill = 'black';
+        playerCannon.fill = 'gradient';
         playerCannon.stroke = 'black';
         playerCannon.id = 'player';
 
@@ -98,19 +98,16 @@
     screenTop.fill = 'black'
     screenBottom.fill = 'black'
 
-    function constantUpdate(){
-        updateCannon();
-    }
-
     function updateCannon(){
         let angle = Math.atan2(playerData.mouseY - playerData.y, playerData.mouseX - playerData.x);
+        if(Math.floor(Math.random() * 100) < playerData.cannonWear){
+            gameData.cannonIntervalLength += 30;
+        }
         playerCannon.rotation = angle;
         playerCannonBase.rotation = angle;
 
         playerCannon.translation.x = playerData.x + 25 * Math.cos(angle);
         playerCannon.translation.y = playerData.y + 25 * Math.sin(angle);
-
-        // get the four corners of the cannon
 
         playerCannonBase.translation.x = playerData.x;
         playerCannonBase.translation.y = playerData.y;
@@ -252,7 +249,8 @@
     buildPlayer();
     playerController();
 
-    setInterval(constantUpdate, gameData.intervalLength);
+    // fix
+    setInterval(updateCannon, gameData.cannonIntervalLength);
 
 
     // npm start
