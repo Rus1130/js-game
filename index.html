@@ -26,7 +26,7 @@
         borderOffset: 20, // 125
         borderWidth: 150, // 150
         frictionCoefficient: 0.9,
-        cannonIntervalLength: 20,
+        mouseMoveDelay: 0,
     }
     
     const playerData = {
@@ -40,7 +40,7 @@
         borderCollision: false,
         mouseX: 0,
         mouseY: 0,
-        cannonWear: 50,
+        cannonWear: 0,
     }
 
     
@@ -98,11 +98,13 @@
     screenTop.fill = 'black'
     screenBottom.fill = 'black'
 
+    function addCannonWear(){
+        gameData.mouseMoveDelay += 0.1;
+    }
+
     function updateCannon(){
         let angle = Math.atan2(playerData.mouseY - playerData.y, playerData.mouseX - playerData.x);
-        if(Math.floor(Math.random() * 100) < playerData.cannonWear){
-            gameData.cannonIntervalLength += 30;
-        }
+
         playerCannon.rotation = angle;
         playerCannonBase.rotation = angle;
 
@@ -215,8 +217,10 @@
         };
 
         document.onmousemove = e => {
-            playerData.mouseX = e.clientX
-            playerData.mouseY = e.clientY
+            setTimeout(() => {
+                playerData.mouseX = e.clientX
+                playerData.mouseY = e.clientY
+            },gameData.mouseMoveDelay)
         }
 
         function move(){
@@ -249,8 +253,7 @@
     buildPlayer();
     playerController();
 
-    // fix
-    setInterval(updateCannon, gameData.cannonIntervalLength);
+    setInterval(updateCannon, gameData.intervalLength);
 
 
     // npm start
