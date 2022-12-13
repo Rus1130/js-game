@@ -9,12 +9,19 @@
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';">
     <script src="two.js"></script>
 </head>
-<body></body>
+<body>
+    <div id="debug"></div>
+</body>
 <script>
     let two = new Two({
         fullscreen: true,
         autostart: true
     }).appendTo(document.body);
+
+    const debug = true;
+    if(!debug){
+        document.getElementById('debug').style.display = 'none';
+    }
 
     const gameData = {
         up: 'w',
@@ -23,7 +30,7 @@
         right: 'd',
         shoot: ' ',
         intervalLength: 20,
-        borderOffset: 20, // 125
+        borderOffset: debug ? 20 : 125, // 125
         borderWidth: 150, // 150
         frictionCoefficient: 0.9,
     }
@@ -36,6 +43,17 @@
         width: 50,
         height: 50,
         speed: 1,
+        borderCollision: false,
+        mouseX: 0,
+        mouseY: 0,
+        cannonWear: 0,
+    }
+
+    const debugData = {
+        vx: 0,
+        vy: 0,
+        x: 0,
+        y: 0,
         borderCollision: false,
         mouseX: 0,
         mouseY: 0,
