@@ -23,7 +23,7 @@
         right: 'd',
         toggleLock: 'l',
         intervalLength: 20,
-        borderOffset: 125, // 125
+        borderOffset: 20, // 125
         borderWidth: 150, // 150
         frictionCoefficient: 0.9,
     }
@@ -45,20 +45,26 @@
 
     
     let player = two.makeRectangle(two.width / 2, two.height / 2, 50 ,50);
-    let playerCannon = two.makeRectangle(playerData.x + 25, playerData.y, 50, 20);
     let playerCannonBase = two.makeRectangle(playerData.x, playerData.y, 30, 30);
+    let playerCannon = two.makeRectangle(playerData.x + 25, playerData.y, 50, 20);
 
-    player.fill = 'red';
-    player.stroke = 'red';
-    player.id = 'player';
+    // put a linear gradient on the cannon that has a black center and a light grey edge
 
-    playerCannon.fill = 'black';
-    playerCannon.stroke = 'black';
-    playerCannon.id = 'player';
 
-    playerCannonBase.fill = 'black';
-    playerCannonBase.stroke = 'black';
-    playerCannonBase.id = 'player';
+
+    function buildPlayer(){
+        player.fill = 'red';
+        player.stroke = 'red';
+        player.id = 'player';
+
+        playerCannon.fill = 'black';
+        playerCannon.stroke = 'black';
+        playerCannon.id = 'player';
+
+        playerCannonBase.fill = 'black';
+        playerCannonBase.stroke = 'black';
+        playerCannonBase.id = 'player';
+    }
 
 
     let borderLeft = two.makeRectangle(-gameData.borderOffset, 0, gameData.borderWidth, two.height * 2);
@@ -213,7 +219,6 @@
             playerData.mouseX = e.clientX
             playerData.mouseY = e.clientY
             updateCannon();
-            
         }
 
         function move(){
@@ -244,7 +249,8 @@
         setInterval(move, gameData.intervalLength);
     }
 
-    playerController()
+    buildPlayer();
+    playerController();
 
 
     // npm start
