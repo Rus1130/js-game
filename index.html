@@ -21,12 +21,11 @@
         down: 's',
         left: 'a',
         right: 'd',
-        toggleLock: 'l',
+        shoot: ' ',
         intervalLength: 20,
         borderOffset: 20, // 125
         borderWidth: 150, // 150
         frictionCoefficient: 0.9,
-        mouseMoveDelay: 0,
     }
     
     const playerData = {
@@ -98,21 +97,19 @@
     screenTop.fill = 'black'
     screenBottom.fill = 'black'
 
-    function addCannonWear(){
-        gameData.mouseMoveDelay += 0.1;
-    }
-
     function updateCannon(){
         let angle = Math.atan2(playerData.mouseY - playerData.y, playerData.mouseX - playerData.x);
 
-        playerCannon.rotation = angle;
-        playerCannonBase.rotation = angle;
+        setTimeout(() => {
+            playerCannon.rotation = angle;
+            playerCannonBase.rotation = angle;
 
-        playerCannon.translation.x = playerData.x + 25 * Math.cos(angle);
-        playerCannon.translation.y = playerData.y + 25 * Math.sin(angle);
+            playerCannon.translation.x = playerData.x + 25 * Math.cos(angle);
+            playerCannon.translation.y = playerData.y + 25 * Math.sin(angle);
 
-        playerCannonBase.translation.x = playerData.x;
-        playerCannonBase.translation.y = playerData.y;
+            playerCannonBase.translation.x = playerData.x;
+            playerCannonBase.translation.y = playerData.y;
+        }, playerData.cannonWear)
     }
 
     window.onresize = () => {
@@ -208,8 +205,22 @@
     function playerController(){
         const keys = {};
 
+        function shoot(){
+            let random = Math.floor(Math.random() * 200);
+            if(random <= 40){
+                playerData.cannonWear += 1;
+                // round to the nearest tenth
+                playerData.cannonWear = Math.round(playerData.cannonWear);
+            
+            }
+            console.log('shoot')
+        }
+
         document.onkeydown = e => {
             keys[e.key] = true;
+            if(e.key == gameData.shoot){
+                shoot();
+            }
         };
 
         document.onkeyup = e => {
@@ -220,7 +231,13 @@
             setTimeout(() => {
                 playerData.mouseX = e.clientX
                 playerData.mouseY = e.clientY
-            },gameData.mouseMoveDelay)
+            }, playerData.cannonWear)
+        }
+
+        document.onmousedown = e => {
+            if(e.button == 0){
+                shoot();
+            }
         }
 
         function move(){
@@ -247,6 +264,7 @@
             
             movePlayer(playerData.vx, playerData.vy);
         }
+
         setInterval(move, gameData.intervalLength);
     }
 
