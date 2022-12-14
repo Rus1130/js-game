@@ -47,10 +47,8 @@
         keys: {},
         offsetDirectionDecider: Math.random() > 0.5 ? true : false,
         offsetDirection: 0.01,
-        bulletData: [],
+        bulletData: {},
     }
-
-    const bullets = [];
     
     const playerData = {
         vx: 0,
@@ -97,7 +95,7 @@
 
         playerCannon.fill = 'gradient';
         playerCannon.stroke = 'black';
-        playerCannon.id = 'player';
+        playerCannon.id = 'playerCannon';
 
         playerCannonBase.fill = 'black';
         playerCannonBase.stroke = 'black';
@@ -145,55 +143,59 @@
     mouseDebug.style.top = playerData.mouseY + 'px';
 
     function constantUpdate(){
-        updateCannon();
-        debugData.x = playerData.x;
-        debugData.y = playerData.y;
-        debugData.vx = playerData.vx;
-        debugData.vy = playerData.vy;
-        debugData.borderCollision = playerData.borderCollision;
-        debugData.mouseX = playerData.mouseX;
-        debugData.mouseY = playerData.mouseY;
-        debugData.cannonWear = playerData.cannonWear;
-        debugData.keys = gameData.keys;
+        setInterval(function(){
 
-        if(debug){
-            staticDebug.style.display = 'initial';
-            mouseDebug.style.display = 'initial';
-            gameData.borderOffset = 20;
+        
+            updateCannon();
+            debugData.x = playerData.x;
+            debugData.y = playerData.y;
+            debugData.vx = playerData.vx;
+            debugData.vy = playerData.vy;
+            debugData.borderCollision = playerData.borderCollision;
+            debugData.mouseX = playerData.mouseX;
+            debugData.mouseY = playerData.mouseY;
+            debugData.cannonWear = playerData.cannonWear;
+            debugData.keys = gameData.keys;
 
-        } else {
-            staticDebug.style.display = 'none';
-            mouseDebug.style.display = 'none';
-            gameData.borderOffset = 125;
-        }
+            if(debug){
+                staticDebug.style.display = 'initial';
+                mouseDebug.style.display = 'initial';
+                gameData.borderOffset = 20;
 
-        calculateBorders()
+            } else {
+                staticDebug.style.display = 'none';
+                mouseDebug.style.display = 'none';
+                gameData.borderOffset = 125;
+            }
 
-        staticDebug.innerHTML = `
-            <br>Border Collision: ${debugData.borderCollision}
-            <br>Keys: ${JSON.stringify(debugData.keys)}
-        `;
+            calculateBorders()
 
-        let mouseDebugCannonWear = `Cannon Wear: ${debugData.cannonWear}\n`
-        let mouseDebugPlayerX = `Player X: ${debugData.x}\n`
-        let mouseDebugPlayerY = `Player Y: ${debugData.y}\n`
-        let mouseDebugPlayerVX = `Player VX: ${debugData.vx}\n`
-        let mouseDebugPlayerVY = `Player VY: ${debugData.vy}\n`
-        let mouseDebugMouseX = `Mouse X: ${debugData.mouseX}\n`
-        let mouseDebugMouseY = `Mouse Y: ${debugData.mouseY}\n`
+            staticDebug.innerHTML = `
+                <br>Border Collision: ${debugData.borderCollision}
+                <br>Keys: ${JSON.stringify(debugData.keys)}
+            `;
 
-        mouseDebug.innerHTML = `<pre>${mouseDebugCannonWear}${mouseDebugPlayerX}${mouseDebugPlayerY}${mouseDebugPlayerVX}${mouseDebugPlayerVY}${mouseDebugMouseX}${mouseDebugMouseY}</pre>`;
+            let mouseDebugCannonWear = `Cannon Wear: ${debugData.cannonWear}\n`
+            let mouseDebugPlayerX = `Player X: ${debugData.x}\n`
+            let mouseDebugPlayerY = `Player Y: ${debugData.y}\n`
+            let mouseDebugPlayerVX = `Player VX: ${debugData.vx}\n`
+            let mouseDebugPlayerVY = `Player VY: ${debugData.vy}\n`
+            let mouseDebugMouseX = `Mouse X: ${debugData.mouseX}\n`
+            let mouseDebugMouseY = `Mouse Y: ${debugData.mouseY}\n`
 
-        if(playerData.vx <= 0.001 && playerData.vx >= -0.001){
-            playerData.vx = 0;
-        }
+            mouseDebug.innerHTML = `<pre>${mouseDebugCannonWear}${mouseDebugPlayerX}${mouseDebugPlayerY}${mouseDebugPlayerVX}${mouseDebugPlayerVY}${mouseDebugMouseX}${mouseDebugMouseY}</pre>`;
 
-        if(playerData.vy <= 0.001 && playerData.vy >= -0.001){
-            playerData.vy = 0;
-        }
+            if(playerData.vx <= 0.001 && playerData.vx >= -0.001){
+                playerData.vx = 0;
+            }
 
-        playerData.x = math.round(playerData.x)
-        playerData.y = math.round(playerData.y)
+            if(playerData.vy <= 0.001 && playerData.vy >= -0.001){
+                playerData.vy = 0;
+            }
+
+            playerData.x = math.round(playerData.x)
+            playerData.y = math.round(playerData.y)
+        }, gameData.intervalLength)
 
     }
 
@@ -276,13 +278,9 @@
         return [collision, collider];
     }
 
-    function spawnBullet(){
-        // spawn the bullet so it spawns at the end of the cannon
+    function spawnPlayerBullet(){
         let bullet = two.makeRectangle(playerCannon.translation.x, playerCannon.translation.y, 10, 10);
         bullet.rotation = playerData.angle;
-
-        // render the bullet behind the cannon
-
 
 
         bullet.translation.x += 15 * Math.cos(playerData.angle);
@@ -290,21 +288,28 @@
         bullet.fill = 'red';
         bullet.stroke = 'black';
         bullet.linewidth = 1;
-        bullet.id = 'bullet';
+        bullet.id = 'playerBullet' + Object.keys(gameData.bulletData).length;
 
+        two.scene.remove(playerCannon);
+        two.scene.remove(playerCannonBase);
+        two.scene.add(bullet);
+        two.scene.add(playerCannon);
+        two.scene.add(playerCannonBase);
 
-        gameData.bulletData.push({
+        gameData.bulletData[bullet.id] = {
             x: playerCannon.translation.x,
             y: playerCannon.translation.y,
+            id: bullet.id,
             vx: 0,
             vy: 0,
             width: 10,
             height: 10,
+            element: bullet,
             angle: playerData.angle,
+            type: 'player',
             speed: 10,
             borderCollision: false
-        })
-        bullets.push(bullet);
+        }
     }
 
     function borderWrapController(elements, elementData){
@@ -342,7 +347,6 @@
         player.translation.set(playerData.x, playerData.y);
     }
 
-
     playerData.angle = Math.atan2(playerData.mouseY - playerData.y, playerData.mouseX - playerData.x);
 
     function playerController(){
@@ -359,8 +363,7 @@
                 console.log(playerData.cannonWearOffset)
             
             }
-            spawnBullet()
-            console.log(bullets)
+            spawnPlayerBullet()
         }
         
 
@@ -450,14 +453,39 @@
         setInterval(move, gameData.intervalLength);
     }
 
+    function bulletController(){
+        function move(){
+            for(i = 0; i < Object.keys(gameData.bulletData).length; i++){
+                let data = gameData.bulletData[Object.keys(gameData.bulletData)[i]]
+
+                data.x += data.speed * Math.cos(data.angle);
+                data.y += data.speed * Math.sin(data.angle);
+
+                let isColliding = checkCollision([data.element], [borderLeft, borderRight, borderTop, borderBottom])[0];
+                let collider = checkCollision([data.element], [borderLeft, borderRight, borderTop, borderBottom])[1];
+
+                // if the bullet is colliding with a border, remove it
+                if(isColliding){
+                    data.element.remove();
+                    delete gameData.bulletData[data.id];
+                } else {
+                    data.element.translation.set(data.x, data.y);
+                }
+
+            }
+        }
+
+        setInterval(move, gameData.intervalLength);
+    }
+
     document.oncontextmenu = e => {
         e.preventDefault();
     }
 
     buildPlayer();
     playerController();
-
-    setInterval(constantUpdate, gameData.intervalLength);
+    constantUpdate();
+    bulletController();
 
 
     // npm start
