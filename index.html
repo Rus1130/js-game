@@ -15,6 +15,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';">
     <script src="two.js"></script>
+    <script src="math.js"></script>
 </head>
 <body>
     <div class="debug" id="static"></div>
@@ -29,11 +30,7 @@
         autostart: true
     }).appendTo(document.body);
 
-    const debug = false;
-    if(!debug){
-        staticDebug.style.display = 'none';
-        mouseDebug.style.display = 'none';
-    }
+    let debug = false;
 
     const gameData = {
         upKey: 'w',
@@ -41,17 +38,21 @@
         leftKey: 'a',
         rightKey: 'd',
         shootKey: ' ',
+        toggleDebugKey: 'p',
         intervalLength: 20,
         borderOffset: debug ? 20 : 125, // 125
         borderWidth: 100, // 150
         frictionCoefficient: 0.9,
+        keys: {},
+        offsetDirectionDecider: Math.random() > 0.5 ? true : false,
+        offsetDirection: 0.01,
     }
     
     const playerData = {
         vx: 0,
         vy: 0,
-        x: two.width / 2,
-        y: two.height / 2,
+        x: Math.round(two.width / 2),
+        y: Math.round(two.height / 2),
         width: 50,
         height: 50,
         speed: 1,
@@ -59,9 +60,9 @@
         mouseX: 0,
         mouseY: 0,
         cannonWear: 0,
-        keys: {},
         angle: null,
         cannonWearOffset: 0,
+        maxWear: 400,
     }
 
     const debugData = {
@@ -137,7 +138,7 @@
     staticDebug.style.top = screenTop.translation._y + screenTop.height + 'px';
 
     mouseDebug.style.left = playerData.mouseX + 10 + 'px';
-    mouseDebug.style.top = playerData.mouseY + 10 + 'px';
+    mouseDebug.style.top = playerData.mouseY + 'px';
 
     function constantUpdate(){
         updateCannon();
@@ -149,23 +150,46 @@
         debugData.mouseX = playerData.mouseX;
         debugData.mouseY = playerData.mouseY;
         debugData.cannonWear = playerData.cannonWear;
-        debugData.keys = playerData.keys;
-    
+        debugData.keys = gameData.keys;
+
+        if(debug){
+            staticDebug.style.display = 'initial';
+            mouseDebug.style.display = 'initial';
+            gameData.borderOffset = 20;
+
+        } else {
+            staticDebug.style.display = 'none';
+            mouseDebug.style.display = 'none';
+            gameData.borderOffset = 125;
+        }
+
+        calculateBorders()
 
         staticDebug.innerHTML = `
             <br>Border Collision: ${debugData.borderCollision}
-            <br>Cannon Wear: ${debugData.cannonWear}
             <br>Keys: ${JSON.stringify(debugData.keys)}
         `;
 
-        mouseDebug.innerHTML = `
-            <br>X: ${debugData.x}
-            <br>Y: ${debugData.y}
-            <br>VX: ${debugData.vx}
-            <br>VY: ${debugData.vy}
-            <br>Mouse X: ${debugData.mouseX}
-            <br>Mouse Y: ${debugData.mouseY}
-        `;
+        let mouseDebugCannonWear = `Cannon Wear: ${debugData.cannonWear}\n`
+        let mouseDebugPlayerX = `Player X: ${debugData.x}\n`
+        let mouseDebugPlayerY = `Player Y: ${debugData.y}\n`
+        let mouseDebugPlayerVX = `Player VX: ${debugData.vx}\n`
+        let mouseDebugPlayerVY = `Player VY: ${debugData.vy}\n`
+        let mouseDebugMouseX = `Mouse X: ${debugData.mouseX}\n`
+        let mouseDebugMouseY = `Mouse Y: ${debugData.mouseY}\n`
+
+        mouseDebug.innerHTML = `<pre>${mouseDebugCannonWear}${mouseDebugPlayerX}${mouseDebugPlayerY}${mouseDebugPlayerVX}${mouseDebugPlayerVY}${mouseDebugMouseX}${mouseDebugMouseY}</pre>`;
+
+        if(playerData.vx <= 0.001 && playerData.vx >= -0.001){
+            playerData.vx = 0;
+        }
+
+        if(playerData.vy <= 0.001 && playerData.vy >= -0.001){
+            playerData.vy = 0;
+        }
+
+        playerData.x = math.round(playerData.x)
+        playerData.y = math.round(playerData.y)
 
     }
 
@@ -181,22 +205,24 @@
         playerCannonBase.translation.y = playerData.y;
 
         setTimeout(() => {
-            playerData.angle = Math.atan2(playerData.mouseY - playerData.y, playerData.mouseX - playerData.x) + playerData.cannonWearOffset;
+            if(playerData.cannonWear < 400){
+                playerData.angle = Math.atan2(playerData.mouseY - playerData.y, playerData.mouseX - playerData.x) + playerData.cannonWearOffset;
+            }
         }, playerData.cannonWear)
-
-
-
     }
 
-    window.onresize = () => {
+    function calculateBorders(){
+        // replace all of the borders and screens
         borderRight.translation.x = two.width + gameData.borderOffset;
         borderRight.height = two.height * 2;
 
         borderBottom.translation.y = two.height + gameData.borderOffset;
         borderBottom.width = two.width * 2;
 
+        borderTop.translation.y = -gameData.borderOffset;
         borderTop.width = two.width * 2;
 
+        borderLeft.translation.x = -gameData.borderOffset;
         borderLeft.height = two.height * 2;
 
         screenRight.translation.x = two.width + gameData.borderOffset - 123;
@@ -205,11 +231,18 @@
         screenBottom.translation.y = two.height + gameData.borderOffset - 123;
         screenBottom.width = two.width * 2;
 
+        screenTop.translation.y = -gameData.borderOffset + 123;
         screenTop.width = two.width * 2;
-        screenLeft.height = two.height * 2;
 
-        playerData.x = two.width / 2;
-        playerData.y = two.height / 2;
+        screenLeft.translation.x = -gameData.borderOffset + 123;
+        screenLeft.height = two.height * 2;
+    }
+
+    window.onresize = () => {
+        calculateBorders()
+
+        playerData.x = Math.round(two.width / 2);
+        playerData.y = Math.round(two.height / 2);
     }
 
     function checkCollision(rects, colliders){
@@ -281,70 +314,98 @@
         function shoot(){
             let random = Math.floor(Math.random() * 200);
             if(random <= 60){
-
-                playerData.cannonWear += 5;
-                playerData.cannonWearOffset += Math.random() > 0.5 ? 0.005 : -0.005;
-                playerData.cannonWear = Math.round(playerData.cannonWear);
+                playerData.cannonWear += 2;
+                if(gameData.offsetDirectionDecider){
+                    playerData.cannonWearOffset = math.round(playerData.cannonWearOffset + (Math.random() > 0.5 ? gameData.offsetDirection : -gameData.offsetDirection), 3);
+                } else {
+                    playerData.cannonWearOffset = math.round(playerData.cannonWearOffset + (Math.random() > 0.5 ? -gameData.offsetDirection : gameData.offsetDirection), 3);
+                }
+                
+                console.log(playerData.cannonWearOffset)
             
             }
-            console.log('shoot')
+            // shoot controller
         }
         
 
         document.onkeydown = e => {
-            playerData.keys[e.key] = true;
+            gameData.keys[e.key] = true;
             if(e.key == gameData.shootKey){
                 shoot();
+            }
+            if(e.key == gameData.toggleDebugKey){
+                debug = !debug;
             }
         };
 
         document.onkeyup = e => {
-            playerData.keys[e.key] = false;
+            gameData.keys[e.key] = false;
         };
 
         document.onmousemove = e => {
             mouseDebug.style.left = e.clientX + 10 + 'px';
-            mouseDebug.style.top = e.clientY + 10 + 'px';
+            mouseDebug.style.top = e.clientY + 'px';
             setTimeout(() => {
-                playerData.mouseX = e.clientX
-                playerData.mouseY = e.clientY
+                if(playerData.cannonWear < 400){
+                    if(playerData.cannonWear > 350){
+                        playerData.cannonWearOffset = 3
+                    } else if(playerData.cannonWear > 300){
+                        playerData.cannonWearOffset = 2
+                    } else if(playerData.cannonWear > 250){
+                        playerData.cannonWearOffset = 1
+                    } else if(playerData.cannonWear > 200){
+                        playerData.cannonWearOffset = 0.5
+                    } else if(playerData.cannonWear > 150){
+                        playerData.cannonWearOffset = 0.1
+                    } else if(playerData.cannonWear > 100){
+                        playerData.cannonWearOffset = 0.05
+                    } else if(playerData.cannonWear > 50){
+                        playerData.cannonWearOffset = 0.01
+                    } else {
+                        playerData.cannonWearOffset = 0
+                    }
+                    playerData.mouseX = e.clientX
+                    playerData.mouseY = e.clientY
+                }
             }, playerData.cannonWear)
         }
 
         document.onmousedown = e => { 
-        playerData.keys["mouse" + e.button] = true;
+            gameData.keys["mouse" + e.button] = true;
             if(e.button == 0){
                 shoot();
             }
         }
 
         document.onmouseup = e => {
-            playerData.keys["mouse" + e.button] = false;
+            gameData.keys["mouse" + e.button] = false;
         }
 
         function move(){
+            staticDebug.style.left = screenLeft.translation._x + screenLeft.width + 10 + 'px';
+            staticDebug.style.top = screenTop.translation._y + screenTop.height + 'px';
+
             borderCollisionController([player], playerData)
-            if(playerData.keys[gameData.upKey]){
+            if(gameData.keys[gameData.upKey]){
                 playerData.vy -= playerData.speed;
                 playerData.borderCollision = false;
             }
-            if(playerData.keys[gameData.downKey]){
+            if(gameData.keys[gameData.downKey]){
                 playerData.vy += playerData.speed;
                 playerData.borderCollision = false;
             }
-            if(playerData.keys[gameData.leftKey]){
+            if(gameData.keys[gameData.leftKey]){
                 playerData.vx -= playerData.speed;
                 playerData.borderCollision = false;
             }
-            if(playerData.keys[gameData.rightKey]){
+            if(gameData.keys[gameData.rightKey]){
                 playerData.vx += playerData.speed;   
                 playerData.borderCollision = false;  
             }
 
-            playerData.vx *= gameData.frictionCoefficient;
-            playerData.vy *= gameData.frictionCoefficient;
+            playerData.vx = math.round(playerData.vx * gameData.frictionCoefficient, 4);
+            playerData.vy = math.round(playerData.vy * gameData.frictionCoefficient, 4);
 
-            
             movePlayer(playerData.vx, playerData.vy);
         }
 
