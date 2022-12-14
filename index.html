@@ -57,15 +57,23 @@
         downKey: 's',
         leftKey: 'a',
         rightKey: 'd',
-        shootKey: ' ',
+        shootKey1: ' ',
+        shootKey2: 'mouse0',
         toggleDebugKey: 'p',
-        intervalLength: 20,
+        intervalLength: 20, // 20
         borderOffset: debug ? 20 : 125, // 125
         borderWidth: 100, // 150
         frictionCoefficient: 0.9,
-        keys: {},
+        keys: {
+            " ": false,
+            mouse0: false,
+        },
         offsetDirectionDecider: Math.random() > 0.5 ? true : false,
         offsetDirection: 0.01,
+        gradientRed: 0,
+        gradientGreen: 255,
+        gradientBlue: 0,
+        bulletSpeed: 10,
     }
     
     const playerData = {
@@ -86,6 +94,8 @@
         bulletCount: 0,
         bulletData: {},
         shootAngle: null,
+        regen: false,
+        regenTimer: Date.now(),
     }
 
     const debugData = {
@@ -97,7 +107,7 @@
         mouseX: 0,
         mouseY: 0,
         cannonWear: 0, // ===========================================================================
-        keys: {},
+        keys: {}
     }
 
     // create a gradient that starts at 
@@ -106,9 +116,6 @@
     let player = two.makeRectangle(two.width / 2, two.height / 2, 50 ,50);
     let playerCannonBase = two.makeRectangle(playerData.x, playerData.y, 30, 30);
     let playerCannon = two.makeRectangle(playerData.x + 25, playerData.y, 50, 20);
-
-    // put a linear gradient on the cannon that has a black center and a light grey edge
-
 
 
     function buildPlayer(){
@@ -161,18 +168,40 @@
 
 
     function constantUpdate(){
+        // check if shootKey1 or shootKey2 havent been pressed for 5 seconds
+
+
         setInterval(function(){
-            mouseDebug.style.left = playerData.mouseX + 10 + 'px';
-            mouseDebug.style.top = playerData.mouseY + 'px';
+            // if 1 second has passed, console.log('1 second has passed')
+            if(Date.now() - playerData.regenTimer >= 5000){
+                playerData.regen = true;
+            }
+            if(gameData.keys[gameData.shootKey1] == true || gameData.keys[gameData.shootKey2] == true){
+                playerData.regen = false;
+                playerData.regenTimer = Date.now();
+            }
+
+            if(playerData.regen){
+                if(playerData.cannonWear > 0){
+                    playerData.cannonWear = playerData.cannonWear - 0.25;
+                }
+            }
 
             for(i = 1; i <= 400; i++){
                 let cell = document.getElementById('cell' + i);
                 if(i <= playerData.cannonWear){
-                    cell.style.backgroundColor = 'black';
+                    cell.style.backgroundColor = 'rgb(' + gameData.gradientRed + ',' + gameData.gradientGreen + ',' + gameData.gradientBlue + ')';
                 } else {
-                    // get a gradient from green to red, when the cannon is at 0% wear it is green, when it is at 100% wear it is red
-
                     cell.style.backgroundColor = 'white';
+                }
+            }
+
+            if(playerData.cannonWear <= 400){
+                let percentage = playerData.cannonWear / 400;
+                if(playerData.cannonWear > 200){
+                    gameData.gradientGreen = Math.round(510 - (510 * percentage));
+                } else {
+                    gameData.gradientRed = Math.round(510 * percentage);
                 }
             }
 
@@ -212,6 +241,27 @@
             let debugKeys = `Keys: ${JSON.stringify(debugData.keys)}\n`
 
             mouseDebug.innerHTML = `<pre>${debugCannonWear}${debugPlayerX}${debugPlayerY}${debugPlayerVX}${debugPlayerVY}${debugMouseX}${debugMouseY}${debugBorderCollision}${debugKeys}</pre>`;
+
+            if(playerData.cannonWear < 400){
+                if(playerData.cannonWear > 350){
+                    playerData.cannonWearOffset = 0.15
+                    //gameData.keys[gameData.shootKey1] = false;
+                } else if(playerData.cannonWear > 300){
+                    playerData.cannonWearOffset = 0.11
+                } else if(playerData.cannonWear > 250){
+                    playerData.cannonWearOffset = 0.09
+                } else if(playerData.cannonWear > 200){
+                    playerData.cannonWearOffset = 0.07
+                } else if(playerData.cannonWear > 150){
+                    playerData.cannonWearOffset = 0.05
+                } else if(playerData.cannonWear > 100){
+                    playerData.cannonWearOffset = 0.03
+                } else if(playerData.cannonWear > 50){
+                    playerData.cannonWearOffset = 0.01
+                } else {
+                    playerData.cannonWearOffset = 0
+                }
+            }
 
             if(playerData.vx <= 0.001 && playerData.vx >= -0.001){
                 playerData.vx = 0;
@@ -335,7 +385,7 @@
             element: bullet,
             angle: playerData.angle,
             type: 'player',
-            speed: 10,
+            speed: gameData.bulletSpeed,
             borderCollision: false
         }
     }
@@ -381,15 +431,12 @@
         function shoot(){
             let random = Math.floor(Math.random() * 200);
             if(random <= 60){
-                playerData.cannonWear += 2;
+                if(playerData.cannonWear < 400) Math.round(playerData.cannonWear = playerData.cannonWear + 2);
                 if(gameData.offsetDirectionDecider){
                     playerData.cannonWearOffset = math.round(playerData.cannonWearOffset + (Math.random() > 0.5 ? gameData.offsetDirection : -gameData.offsetDirection), 3);
                 } else {
                     playerData.cannonWearOffset = math.round(playerData.cannonWearOffset + (Math.random() > 0.5 ? -gameData.offsetDirection : gameData.offsetDirection), 3);
                 }
-                
-                console.log(playerData.cannonWearOffset)
-            
             }
             playerData.bulletCount++;
             spawnPlayerBullet()
@@ -399,10 +446,10 @@
         document.onkeydown = e => {
             let key = e.key.toLowerCase();
             gameData.keys[key] = true;
-            if(key == gameData.shootKey){
+            if(gameData.keys[gameData.shootKey1]){
                 shoot();
             }
-            if(key == gameData.toggleDebugKey){
+            if(gameData.keys[gameData.toggleDebugKey]){
                 debug = !debug;
             }
         };
@@ -418,33 +465,15 @@
                 mouseDebug.style.top = e.clientY + 'px';
             }
             setTimeout(() => {
-                if(playerData.cannonWear < 400){
-                    if(playerData.cannonWear > 350){
-                        playerData.cannonWearOffset = 3
-                    } else if(playerData.cannonWear > 300){
-                        playerData.cannonWearOffset = 2
-                    } else if(playerData.cannonWear > 250){
-                        playerData.cannonWearOffset = 1
-                    } else if(playerData.cannonWear > 200){
-                        playerData.cannonWearOffset = 0.5
-                    } else if(playerData.cannonWear > 150){
-                        playerData.cannonWearOffset = 0.1
-                    } else if(playerData.cannonWear > 100){
-                        playerData.cannonWearOffset = 0.05
-                    } else if(playerData.cannonWear > 50){
-                        playerData.cannonWearOffset = 0.01
-                    } else {
-                        playerData.cannonWearOffset = 0
-                    }
-                    playerData.mouseX = e.clientX
-                    playerData.mouseY = e.clientY
-                }
+                playerData.mouseX = e.clientX
+                playerData.mouseY = e.clientY
             }, playerData.cannonWear)
         }
 
         document.onmousedown = e => { 
+            
             gameData.keys["mouse" + e.button] = true;
-            if(e.button == 0){
+            if(gameData.keys[gameData.shootKey2]){
                 shoot();
             }
         }
