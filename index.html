@@ -379,8 +379,10 @@
         };
 
         document.onmousemove = e => {
-            mouseDebug.style.left = e.clientX + 10 + 'px';
-            mouseDebug.style.top = e.clientY + 'px';
+            if(debug){
+                mouseDebug.style.left = e.clientX + 10 + 'px';
+                mouseDebug.style.top = e.clientY + 'px';
+            }
             setTimeout(() => {
                 if(playerData.cannonWear < 400){
                     if(playerData.cannonWear > 350){
