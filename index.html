@@ -10,6 +10,7 @@
     svg {
         z-index: 0;
     }
+
 </style>
 <head>
     <meta charset="UTF-8">
@@ -46,7 +47,10 @@
         keys: {},
         offsetDirectionDecider: Math.random() > 0.5 ? true : false,
         offsetDirection: 0.01,
+        bulletData: [],
     }
+
+    const bullets = [];
     
     const playerData = {
         vx: 0,
@@ -272,7 +276,38 @@
         return [collision, collider];
     }
 
-    function borderCollisionController(elements, elementData){
+    function spawnBullet(){
+        // spawn the bullet so it spawns at the end of the cannon
+        let bullet = two.makeRectangle(playerCannon.translation.x, playerCannon.translation.y, 10, 10);
+        bullet.rotation = playerData.angle;
+
+        // render the bullet behind the cannon
+
+
+
+        bullet.translation.x += 15 * Math.cos(playerData.angle);
+        bullet.translation.y += 15 * Math.sin(playerData.angle);
+        bullet.fill = 'red';
+        bullet.stroke = 'black';
+        bullet.linewidth = 1;
+        bullet.id = 'bullet';
+
+
+        gameData.bulletData.push({
+            x: playerCannon.translation.x,
+            y: playerCannon.translation.y,
+            vx: 0,
+            vy: 0,
+            width: 10,
+            height: 10,
+            angle: playerData.angle,
+            speed: 10,
+            borderCollision: false
+        })
+        bullets.push(bullet);
+    }
+
+    function borderWrapController(elements, elementData){
         let isColliding = checkCollision(elements, [borderLeft, borderRight, borderTop, borderBottom])[0];
         let collider = checkCollision(elements, [borderLeft, borderRight, borderTop, borderBottom])[1];
 
@@ -324,7 +359,8 @@
                 console.log(playerData.cannonWearOffset)
             
             }
-            // shoot controller
+            spawnBullet()
+            console.log(bullets)
         }
         
 
@@ -385,7 +421,7 @@
             staticDebug.style.left = screenLeft.translation._x + screenLeft.width + 10 + 'px';
             staticDebug.style.top = screenTop.translation._y + screenTop.height + 'px';
 
-            borderCollisionController([player], playerData)
+            borderWrapController([player], playerData)
             if(gameData.keys[gameData.upKey]){
                 playerData.vy -= playerData.speed;
                 playerData.borderCollision = false;
