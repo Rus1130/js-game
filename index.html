@@ -2,9 +2,10 @@
     :root{
         cursor: crosshair;
     }
-    #debug {
+    .debug {
         z-index: 100;
         position: absolute;
+        user-select: none;
     }
     svg {
         z-index: 0;
@@ -12,33 +13,37 @@
 </style>
 <head>
     <meta charset="UTF-8">
-    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';">
     <script src="two.js"></script>
 </head>
 <body>
-    <div id="debug"></div>
+    <div class="debug" id="static"></div>
+    <div class="debug" id="mouse"></div>
 </body>
 <script>
+    const staticDebug = document.getElementById('static');
+    const mouseDebug = document.getElementById('mouse');
+
     let two = new Two({
         fullscreen: true,
         autostart: true
     }).appendTo(document.body);
 
-    const debug = true;
+    const debug = false;
     if(!debug){
-        document.getElementById('debug').style.display = 'none';
+        staticDebug.style.display = 'none';
+        mouseDebug.style.display = 'none';
     }
 
     const gameData = {
-        up: 'w',
-        down: 's',
-        left: 'a',
-        right: 'd',
-        shoot: ' ',
+        upKey: 'w',
+        downKey: 's',
+        leftKey: 'a',
+        rightKey: 'd',
+        shootKey: ' ',
         intervalLength: 20,
         borderOffset: debug ? 20 : 125, // 125
-        borderWidth: 150, // 150
+        borderWidth: 100, // 150
         frictionCoefficient: 0.9,
     }
     
@@ -55,7 +60,8 @@
         mouseY: 0,
         cannonWear: 0,
         keys: {},
-        angle: Math.atan2(this.mouseY - this.y, this.mouseX - this.x)
+        angle: null,
+        cannonWearOffset: 0,
     }
 
     const debugData = {
@@ -66,7 +72,7 @@
         borderCollision: false,
         mouseX: 0,
         mouseY: 0,
-        cannonWear: 0,
+        cannonWear: 0, // ===========================================================================
         keys: {},
     }
 
@@ -91,6 +97,8 @@
         playerCannonBase.fill = 'black';
         playerCannonBase.stroke = 'black';
         playerCannonBase.id = 'player';
+
+        playerData.angle = Math.atan2(playerData.mouseY - playerData.y, playerData.mouseX - playerData.x);
     }
 
 
@@ -125,6 +133,12 @@
     screenTop.fill = 'black'
     screenBottom.fill = 'black'
 
+    staticDebug.style.left = screenLeft.translation._x + screenLeft.width + 10 + 'px';
+    staticDebug.style.top = screenTop.translation._y + screenTop.height + 'px';
+
+    mouseDebug.style.left = playerData.mouseX + 10 + 'px';
+    mouseDebug.style.top = playerData.mouseY + 10 + 'px';
+
     function constantUpdate(){
         updateCannon();
         debugData.x = playerData.x;
@@ -136,8 +150,22 @@
         debugData.mouseY = playerData.mouseY;
         debugData.cannonWear = playerData.cannonWear;
         debugData.keys = playerData.keys;
+    
 
-        document.getElementById('debug').innerHTML = JSON.stringify(debugData, null, 4);
+        staticDebug.innerHTML = `
+            <br>Border Collision: ${debugData.borderCollision}
+            <br>Cannon Wear: ${debugData.cannonWear}
+            <br>Keys: ${JSON.stringify(debugData.keys)}
+        `;
+
+        mouseDebug.innerHTML = `
+            <br>X: ${debugData.x}
+            <br>Y: ${debugData.y}
+            <br>VX: ${debugData.vx}
+            <br>VY: ${debugData.vy}
+            <br>Mouse X: ${debugData.mouseX}
+            <br>Mouse Y: ${debugData.mouseY}
+        `;
 
     }
 
@@ -153,8 +181,11 @@
         playerCannonBase.translation.y = playerData.y;
 
         setTimeout(() => {
-            playerData.angle = Math.atan2(playerData.mouseY - playerData.y, playerData.mouseX - playerData.x);
+            playerData.angle = Math.atan2(playerData.mouseY - playerData.y, playerData.mouseX - playerData.x) + playerData.cannonWearOffset;
         }, playerData.cannonWear)
+
+
+
     }
 
     window.onresize = () => {
@@ -234,7 +265,6 @@
     }
 
     function movePlayer(x, y){
-
         playerData.x += x;
         playerData.y += y;
 
@@ -245,23 +275,25 @@
     }
 
 
-
+    playerData.angle = Math.atan2(playerData.mouseY - playerData.y, playerData.mouseX - playerData.x);
 
     function playerController(){
         function shoot(){
             let random = Math.floor(Math.random() * 200);
-            if(random <= 40){
+            if(random <= 60){
+
                 playerData.cannonWear += 5;
-                // round to the nearest tenth
+                playerData.cannonWearOffset += Math.random() > 0.5 ? 0.005 : -0.005;
                 playerData.cannonWear = Math.round(playerData.cannonWear);
             
             }
             console.log('shoot')
         }
+        
 
         document.onkeydown = e => {
             playerData.keys[e.key] = true;
-            if(e.key == gameData.shoot){
+            if(e.key == gameData.shootKey){
                 shoot();
             }
         };
@@ -271,44 +303,56 @@
         };
 
         document.onmousemove = e => {
+            mouseDebug.style.left = e.clientX + 10 + 'px';
+            mouseDebug.style.top = e.clientY + 10 + 'px';
             setTimeout(() => {
                 playerData.mouseX = e.clientX
                 playerData.mouseY = e.clientY
             }, playerData.cannonWear)
         }
 
-        document.onmousedown = e => {
+        document.onmousedown = e => { 
+        playerData.keys["mouse" + e.button] = true;
             if(e.button == 0){
                 shoot();
             }
         }
 
+        document.onmouseup = e => {
+            playerData.keys["mouse" + e.button] = false;
+        }
+
         function move(){
-            borderCollisionController([player, playerCannon], playerData)
-            if(playerData.keys[gameData.up]){
+            borderCollisionController([player], playerData)
+            if(playerData.keys[gameData.upKey]){
                 playerData.vy -= playerData.speed;
                 playerData.borderCollision = false;
             }
-            if(playerData.keys[gameData.down]){
+            if(playerData.keys[gameData.downKey]){
                 playerData.vy += playerData.speed;
                 playerData.borderCollision = false;
             }
-            if(playerData.keys[gameData.left]){
+            if(playerData.keys[gameData.leftKey]){
                 playerData.vx -= playerData.speed;
                 playerData.borderCollision = false;
             }
-            if(playerData.keys[gameData.right]){
+            if(playerData.keys[gameData.rightKey]){
                 playerData.vx += playerData.speed;   
                 playerData.borderCollision = false;  
             }
 
             playerData.vx *= gameData.frictionCoefficient;
             playerData.vy *= gameData.frictionCoefficient;
+
             
             movePlayer(playerData.vx, playerData.vy);
         }
 
         setInterval(move, gameData.intervalLength);
+    }
+
+    document.oncontextmenu = e => {
+        e.preventDefault();
     }
 
     buildPlayer();
