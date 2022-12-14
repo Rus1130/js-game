@@ -19,11 +19,9 @@
     <script src="math.js"></script>
 </head>
 <body>
-    <div class="debug" id="static"></div>
     <div class="debug" id="mouse"></div>
 </body>
 <script>
-    const staticDebug = document.getElementById('static');
     const mouseDebug = document.getElementById('mouse');
 
     let two = new Two({
@@ -47,8 +45,6 @@
         keys: {},
         offsetDirectionDecider: Math.random() > 0.5 ? true : false,
         offsetDirection: 0.01,
-        bulletData: {},
-        bulletAmnt: 0,
     }
     
     const playerData = {
@@ -66,6 +62,9 @@
         angle: null,
         cannonWearOffset: 0,
         maxWear: 400,
+        bulletCount: 0,
+        bulletData: {},
+        shootAngle: null,
     }
 
     const debugData = {
@@ -137,9 +136,6 @@
     screenTop.fill = 'black'
     screenBottom.fill = 'black'
 
-    staticDebug.style.left = screenLeft.translation._x + screenLeft.width + 10 + 'px';
-    staticDebug.style.top = screenTop.translation._y + screenTop.height + 'px';
-
     mouseDebug.style.left = playerData.mouseX + 10 + 'px';
     mouseDebug.style.top = playerData.mouseY + 'px';
 
@@ -159,32 +155,27 @@
             debugData.keys = gameData.keys;
 
             if(debug){
-                staticDebug.style.display = 'initial';
                 mouseDebug.style.display = 'initial';
                 gameData.borderOffset = 20;
 
             } else {
-                staticDebug.style.display = 'none';
                 mouseDebug.style.display = 'none';
                 gameData.borderOffset = 125;
             }
 
             calculateBorders()
 
-            staticDebug.innerHTML = `
-                <br>Border Collision: ${debugData.borderCollision}
-                <br>Keys: ${JSON.stringify(debugData.keys)}
-            `;
+            let debugCannonWear = `Cannon Wear: ${debugData.cannonWear}\n`
+            let debugPlayerX = `Player X: ${debugData.x}\n`
+            let debugPlayerY = `Player Y: ${debugData.y}\n`
+            let debugPlayerVX = `Player VX: ${debugData.vx}\n`
+            let debugPlayerVY = `Player VY: ${debugData.vy}\n`
+            let debugMouseX = `Mouse X: ${debugData.mouseX}\n`
+            let debugMouseY = `Mouse Y: ${debugData.mouseY}\n`
+            let debugBorderCollision = `Border Collision: ${debugData.borderCollision}\n`
+            let debugKeys = `Keys: ${JSON.stringify(debugData.keys)}\n`
 
-            let mouseDebugCannonWear = `Cannon Wear: ${debugData.cannonWear}\n`
-            let mouseDebugPlayerX = `Player X: ${debugData.x}\n`
-            let mouseDebugPlayerY = `Player Y: ${debugData.y}\n`
-            let mouseDebugPlayerVX = `Player VX: ${debugData.vx}\n`
-            let mouseDebugPlayerVY = `Player VY: ${debugData.vy}\n`
-            let mouseDebugMouseX = `Mouse X: ${debugData.mouseX}\n`
-            let mouseDebugMouseY = `Mouse Y: ${debugData.mouseY}\n`
-
-            mouseDebug.innerHTML = `<pre>${mouseDebugCannonWear}${mouseDebugPlayerX}${mouseDebugPlayerY}${mouseDebugPlayerVX}${mouseDebugPlayerVY}${mouseDebugMouseX}${mouseDebugMouseY}</pre>`;
+            mouseDebug.innerHTML = `<pre>${debugCannonWear}${debugPlayerX}${debugPlayerY}${debugPlayerVX}${debugPlayerVY}${debugMouseX}${debugMouseY}${debugBorderCollision}${debugKeys}</pre>`;
 
             if(playerData.vx <= 0.001 && playerData.vx >= -0.001){
                 playerData.vx = 0;
@@ -289,7 +280,7 @@
         bullet.fill = 'red';
         bullet.stroke = 'black';
         bullet.linewidth = 1;
-        bullet.id = 'playerBullet' + Object.keys(gameData.bulletData).length;
+        bullet.id = 'playerBullet' + playerData.bulletCount;
 
         two.scene.remove(playerCannon);
         two.scene.remove(playerCannonBase);
@@ -297,7 +288,7 @@
         two.scene.add(playerCannon);
         two.scene.add(playerCannonBase);
 
-        gameData.bulletData[bullet.id] = {
+        playerData.bulletData[bullet.id] = {
             x: playerCannon.translation.x,
             y: playerCannon.translation.y,
             id: bullet.id,
@@ -364,22 +355,25 @@
                 console.log(playerData.cannonWearOffset)
             
             }
+            playerData.bulletCount++;
             spawnPlayerBullet()
         }
         
 
         document.onkeydown = e => {
-            gameData.keys[e.key] = true;
-            if(e.key == gameData.shootKey){
+            let key = e.key.toLowerCase();
+            gameData.keys[key] = true;
+            if(key == gameData.shootKey){
                 shoot();
             }
-            if(e.key == gameData.toggleDebugKey){
+            if(key == gameData.toggleDebugKey){
                 debug = !debug;
             }
         };
 
         document.onkeyup = e => {
-            gameData.keys[e.key] = false;
+            let key = e.key.toLowerCase();
+            gameData.keys[key.toLowerCase()] = false;
         };
 
         document.onmousemove = e => {
@@ -456,26 +450,30 @@
 
     function bulletController(){
         function move(){
-            for(i = 0; i < Object.keys(gameData.bulletData).length; i++){
-                let data = gameData.bulletData[Object.keys(gameData.bulletData)[i]]
+            let bulletIDs = Object.keys(playerData.bulletData)
+            bulletIDs.forEach(id => {
+                let element = playerData.bulletData[id].element;
 
-                data.x += data.speed * Math.cos(data.angle);
-                data.y += data.speed * Math.sin(data.angle);
+                // move the bullet at the angle it was shot at
+                playerData.bulletData[id].vx = playerData.bulletData[id].speed * Math.cos(playerData.bulletData[id].angle);
+                playerData.bulletData[id].vy = playerData.bulletData[id].speed * Math.sin(playerData.bulletData[id].angle);
 
-                // FIX BUG ===================================
+                playerData.bulletData[id].x += playerData.bulletData[id].vx;
+                playerData.bulletData[id].y += playerData.bulletData[id].vy;
 
-                let isColliding = checkCollision([data.element], [borderLeft, borderRight, borderTop, borderBottom])[0];
-                let collider = checkCollision([data.element], [borderLeft, borderRight, borderTop, borderBottom])[1];
+                element.translation.x += playerData.bulletData[id].vx;
+                element.translation.y += playerData.bulletData[id].vy;
 
-                // if the bullet is colliding with a border, remove it
+
+                // if the element collides with the border, remove it
+                element.translation.set(playerData.bulletData[id].x, playerData.bulletData[id].y);
+                let isColliding = checkCollision([element], [borderLeft, borderRight, borderTop, borderBottom])[0];
+
                 if(isColliding){
-                    data.element.remove();
-                    delete gameData.bulletData[data.id];
-                } else {
-                    data.element.translation.set(data.x, data.y);
+                    playerData.bulletData[id].element.remove();
+                    delete playerData.bulletData[id];
                 }
-
-            }
+            })
         }
 
         setInterval(move, gameData.intervalLength);
