@@ -7,6 +7,16 @@
         position: absolute;
         user-select: none;
     }
+    #wearDisplay {
+        z-index: 100;
+        position: absolute;
+        user-select: none;
+        width: 400px;
+        height: 50px;
+        border: 1px solid black;
+        display: grid;
+        grid-template-columns: repeat(400, 1fr);
+    }
     svg {
         z-index: 0;
     }
@@ -20,9 +30,20 @@
 </head>
 <body>  
     <div class="debug" id="mouse"></div>
+    <div id="wearDisplay"></div>
 </body>
 <script>
     const mouseDebug = document.getElementById('mouse');
+    const cannonWearDisplay = document.getElementById('wearDisplay');
+
+    for(i = 1; i <= 400; i++){
+        let cell = document.createElement('div');
+        cell.id = 'cell' + i;
+        cell.style.backgroundColor = 'white';
+        cell.style.height = '50px';
+        cell.style.zIndex = '100';
+        cannonWearDisplay.appendChild(cell);
+    }
 
     let two = new Two({
         fullscreen: true,
@@ -78,6 +99,8 @@
         cannonWear: 0, // ===========================================================================
         keys: {},
     }
+
+    // create a gradient that starts at 
 
     
     let player = two.makeRectangle(two.width / 2, two.height / 2, 50 ,50);
@@ -136,13 +159,23 @@
     screenTop.fill = 'black'
     screenBottom.fill = 'black'
 
-    mouseDebug.style.left = playerData.mouseX + 10 + 'px';
-    mouseDebug.style.top = playerData.mouseY + 'px';
 
     function constantUpdate(){
         setInterval(function(){
+            mouseDebug.style.left = playerData.mouseX + 10 + 'px';
+            mouseDebug.style.top = playerData.mouseY + 'px';
 
-        
+            for(i = 1; i <= 400; i++){
+                let cell = document.getElementById('cell' + i);
+                if(i <= playerData.cannonWear){
+                    cell.style.backgroundColor = 'black';
+                } else {
+                    // get a gradient from green to red, when the cannon is at 0% wear it is green, when it is at 100% wear it is red
+
+                    cell.style.backgroundColor = 'white';
+                }
+            }
+
             updateCannon();
             debugData.x = playerData.x;
             debugData.y = playerData.y;
@@ -162,6 +195,9 @@
                 mouseDebug.style.display = 'none';
                 gameData.borderOffset = 125;
             }
+
+            cannonWearDisplay.style.left = screenLeft.translation._x + screenLeft.width + 10 + 'px';
+            cannonWearDisplay.style.top = screenTop.translation._y + screenTop.height + 10 + 'px';
 
             calculateBorders()
 
@@ -418,9 +454,6 @@
         }
 
         function move(){
-            staticDebug.style.left = screenLeft.translation._x + screenLeft.width + 10 + 'px';
-            staticDebug.style.top = screenTop.translation._y + screenTop.height + 'px';
-
             borderWrapController([player], playerData)
             if(gameData.keys[gameData.upKey]){
                 playerData.vy -= playerData.speed;
