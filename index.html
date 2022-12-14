@@ -48,6 +48,7 @@
         offsetDirectionDecider: Math.random() > 0.5 ? true : false,
         offsetDirection: 0.01,
         bulletData: {},
+        bulletAmnt: 0,
     }
     
     const playerData = {
@@ -460,6 +461,8 @@
 
                 data.x += data.speed * Math.cos(data.angle);
                 data.y += data.speed * Math.sin(data.angle);
+
+                // FIX BUG ===================================
 
                 let isColliding = checkCollision([data.element], [borderLeft, borderRight, borderTop, borderBottom])[0];
                 let collider = checkCollision([data.element], [borderLeft, borderRight, borderTop, borderBottom])[1];
